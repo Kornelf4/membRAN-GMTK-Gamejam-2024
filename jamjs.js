@@ -5,10 +5,12 @@ let game = {
     rawTileMap: [], //2d, set it every scene change
     girdSize: 50, //In pixel. Size of every tile
     mapSizeX: 50, //In girdSize
-    mapSizeY: 5, //In girdSize
+    mapSizeY: 50, //In girdSize
+    canvasX: null,
+    canvasY: null,
     clicking: false,
-    cursorX: null,
-    cursorY: null,
+    cursorX: 200,
+    cursorY: 200,
     pressedKeys: {},
     //Every tile name have to be listed is database, and need rawSymbol propery to find it from rawTileMap
     scenes: [], //"menu", "playing" (can't be two same)
@@ -22,13 +24,22 @@ let game = {
         console.error(new ReferenceError("Scene not found: " + sceneName + " -> returned with false"));
         return false;
     },
+    debugObjects: function() {
+        for(let i = 0; i <game.objects.length; i++) {
+            if(game.objects[i].scene != game.actualScene || game.objects[i].type == "camera") continue;
+            ctx.fillStyle = "black";
+            ctx.fillRect(game.objects[i].x, game.objects[i].y, 10, 10);
+            ctx.fillRect(game.cursorX, game.cursorY, 5, 5);
+        }
+    },
     camera: function (x, y) { //add this to the objects. Used in rendering.
         this.x = x;
         this.y = y;
-        this.xsize = game.canvas.style.width;
-        this.ysize = game.canvas.style.height;
+        this.xsize = parseInt(game.canvas.width);
+        this.ysize = parseInt(game.canvas.height);
         this.layers = [];
         this.type = "camera";
+        this.scene = game.actualScene;
         this.rotation = 0;
         this.hasLayers = true;
         this.getRelativeX = (objX) => {
@@ -44,21 +55,22 @@ let game = {
         this.xsize = game.girdSize;
         this.ysize = game.girdSize;
         this.type = "tile";
+        this.hasLayers = false;
         this.name = name;
         this.scene = game.actualScene;
         if (game.dataBase[name] === undefined) {
             console.error(new ReferenceError("Tile properties not found in dataBase. Tile name: " + name + "   -> Skipped tile generation"));
         } else {
-            for (i of game.dataBase[name]) {
+            for (let i in game.dataBase[name]) {
                 this[i] = game.dataBase[name][i]; //Tiles must need src property, and can be extended with custom functions and properties
             }
             this.image = { img: null, src: null };
             this.image.src = game.dataBase[name].src;
-            this.image.img = game.getSprite(this.image.src, this.xsize, this.ysize);
+            this.image.img = game.getSprite(this.image.src, game.girdSize, game.girdSize);
         }
     },
     findTileName: function (symbol) {
-        for (i of game.dataBase) {
+        for (let i in game.dataBase) {
             if (game.dataBase[i].rawSymbol == symbol) {
                 return i;
             }
@@ -67,15 +79,15 @@ let game = {
     },
     addTilesToObjects: function () { //call when scene switching
         if (game.rawTileMap.length != game.mapSizeY || game.rawTileMap[0].length != game.mapSizeX) {
-            console.error(new ReferenceError("Map y and x size must be same with the rewTileMap's size     -> returning"));
-            return;
+            console.error(new ReferenceError("Map y and x size must be same with the rawTileMap's size     -> returning"));
+            //return;
         }
         for (let i = 0; i < game.rawTileMap.length; i++) {
-            for (let j = 0; j < game.rawTileMap[i].length; i++) {
+            for (let j = 0; j < game.rawTileMap[i].length; j++) {
                 let tile = game.rawTileMap[i][j];
-                if(tile == 0) continue;
+                if(tile == "0") continue;
                 let tileName = game.findTileName(tile);
-                game.objects.unshift(new tile(j * game.girdSize, i * game.girdSize, tileName));
+                game.objects.unshift(new game.tile(j * game.girdSize, i * game.girdSize, tileName));
             }
         }
     },
@@ -109,44 +121,67 @@ let game = {
         this.active = isActive;
         this.img = game.getSprite(src)
     },
-    drawImage: function (image, x, y, width, height, angle) { //in deg
-        game.ctx.save();
-        game.ctx.translate(x + width / 2, y + height / 2);
-        game.ctx.rotate(angle * Math.PI / 180);
-        game.ctx.fillStyle = "black";
-        game.ctx.fillRect(-width / 2, -height / 2, width, height);
-        game.ctx.drawImage(image, -width / 2, -height / 2, width, height);
-        game.ctx.restore();
+    drawImage: function (image, x, y, width, height, angle, clipX, clipY, clipWidth, clipHeight) { //in deg
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        ctx.rotate(angle * Math.PI / 180);
+        ctx.fillStyle = "black";
+        //ctx.fillRect(-width / 2, -height / 2, width, height);
+        ctx.drawImage(image, -width / 2, -height / 2, width, height);
+        ctx.restore();
     },
     clipImage: function (image, clipX, clipY, clipWidth, clipHeight) {
-        const canvas = document.createElement('canvas');
+        /*const canvas = document.createElement('canvas');
+        document.getElementById("body").removeChild(document.getElementById("body").lastChild);
+        document.getElementById("body").appendChild(canvas);
+        canvas.crossorigin="anonymous";
+        canvas.crossOrigin="Anonymous";
         canvas.width = clipWidth;
         canvas.height = clipHeight;
+        let img = image;
+        //img.crossOrigin = "Anonymous";
         const ctx2 = canvas.getContext('2d');
-        ctx2.drawImage(image, clipX, clipY, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight);
-        return canvas.toDataURL();
+        ctx2.clearRect(0, 0, clipWidth, clipHeight);
+        ctx2.drawImage(img, clipX, clipY, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight);
+        console.log(image);
+        return canvas.toDataURL();*/
     },
     updateMousePosition: function (e) {
         if (game.canvas.clicked == true) {
-            game.clicking = true;
+            game.clicking = !true;
         } else {
-            game.clicking = false;
+            game.clicking = !false;
         }
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
         if (camera === undefined) {
             console.error(new ReferenceError("Failed to update mouse position (can't found camera object)   -> returning"));
             return;
         }
-        let rect = game.canvas.getBoundingClientRect();
+        /*let rect = game.canvas.getBoundingClientRect();
         let x = e.clientX - rect.left;
         let y = e.clientY - rect.top;
         x += camera.x;
         y += camera.y;
-        game.cursorX = x;
-        game.cursorY = y;
+        game.cursorX = x.toFixed(0);
+        game.cursorY = y.toFixed(0);*/
+    },
+    drawText: function(x, y, text, fontStyle, fontSize, color) {
+        let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
+        ctx.fillStyle = color;
+        ctx.font = (fontSize).toString()+"px "+fontStyle;
+        ctx.fillText(text, camera.getRelativeX(x), camera.getRelativeY(y) + fontSize);
     },
     render: function (obj) { //Draw an objects layers. Layers can be animaions (flipbook: all the frames in one long image)(of the animation not active, draw the first frame), images. 
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
+        if(obj.ui == true) {
+            var calculatedX = obj.x;
+            var calculatedY = obj.y;
+        } else {
+            var calculatedX = camera.getRelativeX(obj.x);
+            var calculatedY = camera.getRelativeY(obj.y);
+        }
+        
+        if(obj == camera) return;
         if (!game.isOverlap(obj, camera)) return; //do not draw when cant see the object
         if (camera === undefined) {
             console.error(new ReferenceError("Camera object can't be found. Be cure you have a canera object or an object with type: camera, x, y property and getRelativeX() and getRelativeY() methodx. -> Returning. Didn't rendered"));
@@ -154,6 +189,12 @@ let game = {
         }
         if (obj.hasLayers == true) {
             for (let i = 0; i < obj.layers.length; i++) {
+                if(obj.layers[i].relX !== undefined) {
+                    calculatedX += obj.layers[i].relX;
+                }
+                if(obj.layers[i].relY !== undefined) {
+                    calculatedY += obj.layers[i].relY;
+                }
                 if (obj.layers[i].type == "flipbook") { //{type: "flipbook",active: true, img: img, rotation: 0, frames: 3, timing: 10, phase: 0; actualFrameIndex, invert: false, sine: false}
                     let actualLayer = obj.layers[i];
                     if (actualLayer.active == true) {
@@ -180,18 +221,29 @@ let game = {
                                 }
                             }
                         }
-                        let frameImgSrc = game.clipImage(actualLayer.img, actualFrameIndex * obj.xsize, 0, obj.xsize, obj.ysize);
-                        let frameImg = new Image(obj.xsize, obj.ysize);
-                        frameImg.src = frameImgSrc;
-                        game.drawImage(frameImg, camera.getRelativeX(obj.x), camera.getRelativeY(obj.y), obj.xsize, obj.ysize, obj.rotation);
+                        //let frameImgSrc = game.clipImage(actualLayer.img, actualLayer.actualFrameIndex * obj.xsize, 0, obj.xsize, obj.ysize);
+                        let frameImg = game.getSprite(obj.name + obj.layers[i].name + obj.layers[i].actualFrameIndex + ".png", obj.xsize, obj.ysize);
+                        console.log(frameImg.src);
+                        game.drawImage(frameImg, calculatedX, calculatedY, obj.xsize, obj.ysize, obj.rotation);
                     } else {
                         let frameImgSrc = game.clipImage(actualLayer.img, 0, 0, obj.xsize, obj.ysize);
                         let frameImg = new Image(obj.xsize, obj.ysize);
                         frameImg.src = frameImgSrc;
-                        game.drawImage(frameImg, camera.getRelativeX(obj.x), camera.getRelativeY(obj.y), obj.xsize, obj.ysize, obj.rotation);
+                        game.drawImage(frameImg, calculatedX, calculatedY, obj.xsize, obj.ysize, obj.rotation);
                     }
                 } else if (obj.layers[i].type == "image") {
-                    game.drawImage(obj.layers[i].img, obj.x, obj.y, obj.xsize, obj.ysize, obj.rotation);
+                    game.drawImage(obj.layers[i].img, calculatedX, calculatedY, obj.xsize, obj.ysize, obj.rotation);
+                } else if (obj.layers[i].type == "text") {
+                    game.drawText(camera.getRelativeX(obj.x + obj.layers[i].relX), camera.getRelativeY(obj.y + obj.layers[i].relY), obj.layers[i].text, obj.layers[i].style, obj.layers[i].size, obj.layers[i].color);
+                } else if (obj.layers[i].type == "filled") {
+                    ctx.fillStyle = obj.layers[i].color;
+                    ctx.fillRect(calculatedX, calculatedY, obj.xsize, obj.ysize);
+                }
+                if(obj.layers[i].relX !== undefined) {
+                    calculatedX -= obj.layers[i].relX;
+                }
+                if(obj.layers[i].relY !== undefined) {
+                    calculatedY -= obj.layers[i].relY;
                 }
             }
         } else { //image: {img: img, src: image.png, rotation: 0}
@@ -199,12 +251,12 @@ let game = {
                 console.error(new ReferenceError("Cant render object withuot image or layers. Objects name: " + obj.name + "   -> Returning"));
                 return;
             }
-            game.drawImage(obj.image.img, obj.x, obj.y, obj.xsize, obj.ysize, obj.rotation);
+            game.drawImage(obj.image.img, camera.getRelativeX(obj.x), camera.getRelativeY(obj.y), obj.xsize, obj.ysize, obj.rotation);
         }
     },
     updateAll() {
         for(let i = 0; i < game.objects.length; i++) {
-            if(game.objects[i].update !== undefined) {
+            if(game.objects[i].update !== undefined && game.objects[i].scene == game.actualScene) {
                 game.objects[i].update();
             }
         }
@@ -217,11 +269,38 @@ let game = {
         }
     },
     renderWorld: function () { //Optional. Call it every tick to render all the objects in the actual scene.
-        ctx.clearRect(0, 0, game.canvas.style.width, game.canvas.style.height);
+        ctx.fillStyle = "lightblue";
+        ctx.fillRect(0, 0, parseInt(game.canvas.width), parseInt(game.canvas.height));
         for (let i = 0; i < game.objects.length; i++) {
-            if (game.objects[i].scene == game.actualScene) {
-                geme.render(game.objects[i]);
+            if (game.objects[i].scene == game.actualScene && game.objects[i].type != "camera") {
+                game.render(game.objects[i]);
             }
+        }
+    },
+    deleteObject: function(filter, type) {
+        let removed = 0;
+        switch(filter) {
+            case "index":
+                game.objects.splice(type);
+                removed++;
+                break;
+            case "withProp":
+                for(let i = 0; i < game.objects.length; i++) {
+                    if(game.objects[i][type.prop] == type.value) {
+                        game.objects.splice(i - removed);
+                        removed++;
+                    }
+                }
+                break;
+            case "firstWithProp":
+                for(let i = 0; i < game.objects.length; i++) {
+                    if(game.objects[i][type.prop] == type.value) {
+                        game.objects.splice(i - removed);
+                        removed++;
+                        break;
+                    }
+                }
+                break;
         }
     },
     collide: function (array, obj, returntype, filter) { //compare all the object collisions in the given array with the given objects
@@ -229,19 +308,21 @@ let game = {
         let collides = []; //used in multiple collision detection
         for (let i = 0; i < array.length; i++) {
             if (array[i] === obj) continue;
+            if (array[i].canCollide == false) continue;
             if (game.isOverlap(obj, array[i])) {
                 if (returntype == "boo") return true; //Is collided with anything?
                 if (returntype == "object") return array[i]; //What is this colliding?
                 if (returntype == "multi") collides.unshift(array[i]);  //What is this colliding? (return the array of collided objects)
                 if ((returntype == "sorted" && array[i][filter.property] == filter.value) && array[i][filter.property] !== undefined) return true; //The collided object has the filtered property with value?
             } else {
-                if (returntype == "boo") return false;
+                if (returntype == "boo") //return false;
                 if (returntype == "object" || returntype == "sorted") {
                     console.error(new ReferenceError("Warning! Can not return object from collide when not overlap. Try another return type. Actual return type: " + returntype + " -> returned false"));
-                    return false;
+                    //return false;
                 }
             }
         }
+        return false;
     },
     findObjectWithProp: function (array, property, value) { //get the first with the given property and value, and return with the index
         for (let i = 0; i < array.length; i++) {
@@ -251,6 +332,21 @@ let game = {
     }
 };
 let ctx = game.canvas.getContext("2d");
+let rect = game.canvas.getBoundingClientRect();
+game.canvasX = (game.canvas.getBoundingClientRect().left).toFixed(5);
+game.canvasY = (game.canvas.getBoundingClientRect().top).toFixed(5);
+console.log(game.canvasY);
+game.canvas.onclick = function() {
+    game.clicking = !true;
+};
+window.onmousemove = function(e) {
+    let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
+    /*game.cursorX = e.clientX + camera.x - game.canvasX;
+    game.cursorY = e.clientY + camera.y - game.canvasY;*/
+    //console.log("mouse x: " + game.cursorX);
+    game.cursorX = (e.clientX - game.canvasX) / (rect.right - game.canvasX) * parseFloat(game.canvas.width); // /1.68
+    game.cursorY = (e.clientY - game.canvasY) / (rect.bottom - game.canvasY) * parseFloat(game.canvas.height); // //1.68
+}
 window.addEventListener("keydown", function (e) {
     game.pressedKeys[e.key.toLowerCase()] = true;
 }, false);
