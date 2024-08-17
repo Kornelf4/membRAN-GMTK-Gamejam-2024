@@ -35,6 +35,7 @@ let game = {
     camera: function (x, y) { //add this to the objects. Used in rendering.
         this.x = x;
         this.y = y;
+        this.canCollide = false;
         this.xsize = parseInt(game.canvas.width);
         this.ysize = parseInt(game.canvas.height);
         this.layers = [];
@@ -199,6 +200,7 @@ let game = {
                     let actualLayer = obj.layers[i];
                     if (actualLayer.active == true) {
                         actualLayer.phase++;
+                        console.log(actualLayer.actualFrameIndex); 
                         if (actualLayer.phase == actualLayer.timing && actualLayer.inverse == false) {
                             actualLayer.phase = 0;
                             actualLayer.actualFrameIndex++;
@@ -223,7 +225,7 @@ let game = {
                         }
                         //let frameImgSrc = game.clipImage(actualLayer.img, actualLayer.actualFrameIndex * obj.xsize, 0, obj.xsize, obj.ysize);
                         let frameImg = game.getSprite(obj.name + obj.layers[i].name + obj.layers[i].actualFrameIndex + ".png", obj.xsize, obj.ysize);
-                        console.log(frameImg.src);
+                        console.log(obj.name + obj.layers[i].name + obj.layers[i].actualFrameIndex + ".png");
                         game.drawImage(frameImg, calculatedX, calculatedY, obj.xsize, obj.ysize, obj.rotation);
                     } else {
                         let frameImgSrc = game.clipImage(actualLayer.img, 0, 0, obj.xsize, obj.ysize);
@@ -310,7 +312,7 @@ let game = {
             if (array[i] === obj) continue;
             if (array[i].canCollide == false) continue;
             if (game.isOverlap(obj, array[i])) {
-                if (returntype == "boo") return true; //Is collided with anything?
+                if (returntype == "boo") {console.log(obj); console.log(array[i]); return true; }; //Is collided with anything?
                 if (returntype == "object") return array[i]; //What is this colliding?
                 if (returntype == "multi") collides.unshift(array[i]);  //What is this colliding? (return the array of collided objects)
                 if ((returntype == "sorted" && array[i][filter.property] == filter.value) && array[i][filter.property] !== undefined) return true; //The collided object has the filtered property with value?
@@ -356,7 +358,9 @@ window.addEventListener("keyup", function (e) {
 game.canvas.addEventListener("mousedown", function (e) {
     game.updateMousePosition(e);
 });
-
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min) ) + min;
+}
 /*
 Description of all:
 Properties:
