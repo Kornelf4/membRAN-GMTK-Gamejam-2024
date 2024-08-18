@@ -14,9 +14,16 @@ function addMatter() {
         game.objects[game.objects.length - 1].start();
     }
 }
+function spawnViruses() {
+    if(game.actualScene == "menu") return;
+    if(getRndInteger(0, 50) > 5) return;
+    game.objects.push(new virus(getRndInteger(0, maps[game.actualScene][0].length)  * game.girdSize, getRndInteger(0, maps[game.actualScene].length) * game.girdSize));
+    game.objects[game.objects.length - 1].start();
+}
 function tick() {
     game.renderWorld();
     addBubbles(2);
+    spawnViruses();
     addMatter();
     for(let i = 0; i < game.objects.length; i++) {
         if(game.objects[i].type ==  "food") {
@@ -27,7 +34,7 @@ function tick() {
 }
 
 function start() {
-    game.girdSize = 100;
+    game.girdSize = 75;
     game.scenes = ["menu", "game1", "game2"];
     game.actualScene = "menu";
     
@@ -52,7 +59,7 @@ function start() {
         game.mapSizeY = 4;
         game.addTilesToObjects();
         game.showBuildArea = false;
-        game.objects.unshift(new player(300, 350));
+        game.objects.unshift(new player(4 * game.girdSize, 4 *  game.girdSize));
         game.objects.unshift(new bubble(300, 350));
         game.objects.push(new button(20, 20, 120, 30, "lightgreen", "BUILD CELL", function() {game.showBuildArea = !game.showBuildArea}));
         game.objects.push(new sideBar(200));

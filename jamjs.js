@@ -328,6 +328,9 @@ let game = {
                 }
             }
         }
+        if(returntype == "multi") {
+            return collides;
+        }
         return false;
     },
     findObjectWithProp: function (array, property, value) { //get the first with the given property and value, and return with the index
