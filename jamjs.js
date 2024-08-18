@@ -170,7 +170,7 @@ let game = {
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
         ctx.fillStyle = color;
         ctx.font = (fontSize).toString()+"px "+fontStyle;
-        ctx.fillText(text, camera.getRelativeX(x), camera.getRelativeY(y) + fontSize);
+        ctx.fillText(text, x, y + fontSize);
     },
     render: function (obj) { //Draw an objects layers. Layers can be animaions (flipbook: all the frames in one long image)(of the animation not active, draw the first frame), images. 
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
@@ -183,7 +183,7 @@ let game = {
         }
         
         if(obj == camera) return;
-        if (!game.isOverlap(obj, camera)) return; //do not draw when cant see the object
+        if (!game.isOverlap(obj, camera) && obj.ui == false) return; //do not draw when cant see the object
         if (camera === undefined) {
             console.error(new ReferenceError("Camera object can't be found. Be cure you have a canera object or an object with type: camera, x, y property and getRelativeX() and getRelativeY() methodx. -> Returning. Didn't rendered"));
             return;
@@ -236,7 +236,7 @@ let game = {
                 } else if (obj.layers[i].type == "image") {
                     game.drawImage(obj.layers[i].img, calculatedX, calculatedY, obj.xsize, obj.ysize, obj.rotation);
                 } else if (obj.layers[i].type == "text") {
-                    game.drawText(camera.getRelativeX(obj.x + obj.layers[i].relX), camera.getRelativeY(obj.y + obj.layers[i].relY), obj.layers[i].text, obj.layers[i].style, obj.layers[i].size, obj.layers[i].color);
+                    game.drawText(calculatedX, calculatedY, obj.layers[i].text, obj.layers[i].style, obj.layers[i].size, obj.layers[i].color);
                 } else if (obj.layers[i].type == "filled") {
                     ctx.fillStyle = obj.layers[i].color;
                     ctx.fillRect(calculatedX, calculatedY, obj.xsize, obj.ysize);

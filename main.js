@@ -35,8 +35,10 @@ function start() {
         game.mapSizeX = maps["game1"][0].length;
         game.mapSizeY = 4;
         game.addTilesToObjects();
+        game.showBuildArea = false;
         game.objects.unshift(new player(300, 350));
         game.objects.unshift(new bubble(300, 350));
+        game.objects.unshift(new button(20, 20, 120, 30, "lightgreen", "BUILD CELL", function() {game.showBuildArea = !game.showBuildArea}))
     }));
     game.startAll();
     setInterval("tick()", 20);
