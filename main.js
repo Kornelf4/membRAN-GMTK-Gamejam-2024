@@ -16,8 +16,8 @@ function addMatter() {
 }
 function spawnViruses() {
     if(game.actualScene == "menu") return;
-    if(getRndInteger(0, 50) > 5) return;
-    game.objects.push(new virus(getRndInteger(0, maps[game.actualScene][0].length)  * game.girdSize, getRndInteger(0, maps[game.actualScene].length) * game.girdSize));
+    if(getRndInteger(0, 500) > 5) return;
+    game.objects.push(new virus(getRndInteger(0, maps[game.actualScene][0].length)  * game.girdSize, getRndInteger(0, maps[game.actualScene].length) * game.girdSize, getRndInteger(0, 4)));
     game.objects[game.objects.length - 1].start();
 }
 function tick() {

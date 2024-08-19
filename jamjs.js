@@ -57,6 +57,7 @@ let game = {
         this.ysize = game.girdSize;
         this.type = "tile";
         this.hasLayers = false;
+        this.scene = game.actualScene;
         this.name = name;
         this.visible = true;
         this.update = function() {
@@ -312,9 +313,20 @@ let game = {
         let collides = []; //used in multiple collision detection
         for (let i = 0; i < array.length; i++) {
             if (array[i] === obj) continue;
+            if(array[i].type == "camera") continue;
+            if(array[i].scene != obj.scene && obj.scene !== undefined) {
+                /*console.log(obj.constructor.name);
+                console.log(typeof array[i])*/
+                continue;
+            }
             if (array[i].canCollide == false) continue;
             if (game.isOverlap(obj, array[i])) {
-                if (returntype == "boo") {return true; }; //Is collided with anything?
+                if (returntype == "boo") {
+                    if(obj.constructor.name == "virus") {
+                        console.log(array[i]);
+                    }
+                    return true; 
+                }; //Is collided with anything?
                 if(returntype == "moving" && !array[i].collectable) return true;
                 if (returntype == "object") return array[i]; //What is this colliding?
                 if((returntype == "objectsorted" &&  array[i][filter.property] == filter.value) && array[i][filter.property] !== undefined) return array[i];

@@ -494,6 +494,7 @@ class player {
                         if(new cellTypes[this.buildType](this.buildPlaces[i].x, this.buildPlaces[i].y).energyCost <= this.energy && game.showBuildArea) {
                             this.energy -= new cellTypes[this.buildType](this.buildPlaces[i].x, this.buildPlaces[i].y).energyCost;
                             this.cells.unshift(new cellTypes[this.buildType](this.buildPlaces[i].x, this.buildPlaces[i].y));
+                            this.cells[0].scene = game.actualScene;
                             if(this.cells[0].start !== undefined) this.cells[0].start();
                             this.buildPlaces.splice(i, 1);
                         }
