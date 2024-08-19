@@ -1,3 +1,4 @@
+
 class button {
     constructor(x, y, xsize, ysize, color, text, call) {
         this.x = x;
@@ -193,7 +194,7 @@ let cellTypes = {
         this.y = y;
         this.energyCost = 3;
         this.xsize = game.girdSize;
-        this.hp = 2;
+        this.hp = 1;
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.type = "cell";
@@ -302,8 +303,12 @@ let cellTypes = {
             }
             for(let i = 0; i < toDelete.length; i++) {
                 let removed = 0;
-                if(toDelete[i - removed].type == "tile") {
-                    game.objects.splice(game.objects.indexOf(toDelete[i]), 1);
+                if(toDelete[i - removed].type == "tile" || toDelete[i - removed].collectable == true) {
+                    if(toDelete[i - removed].hp !== undefined) {
+                        toDelete[i - removed].hp -= 2;
+                    } else {
+                        game.objects.splice(game.objects.indexOf(toDelete[i]), 1);
+                    }
                 }
             }
             parent.energy -= 2.5;
@@ -382,6 +387,7 @@ class player {
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.type = "player";
+        this.groupDebug = null;
         this.energy = 50;
         this.name = "player";
         this.scene = game.actualScene; 
@@ -391,6 +397,14 @@ class player {
         this.speed = 5;
         this.layers = [];
         this.buildPlaces = [];
+        this.sensorContain = function(array, element) {
+            for(let i = 0; i < array.length; i++) {
+                if(array[i].x == element.x && array[i].y == element.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
         this.visible = false;
         this.canCollide = false;
         this.cellCollide = function (cell, heading) {
@@ -406,7 +420,7 @@ class player {
             }
         }
         this.cells = [new cellTypes.baseCell(this.x, this.y)];
-        this.update = function () {
+        this.update = () =>  {
             this.buildPlaces = [];
             let collided = false;
             let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
@@ -462,16 +476,74 @@ class player {
                     }
                 }
             }
+            if(this.cells.length == 0) {
+                gameOver();
+                console.log("a")
+            }
+            if(game.actualScene == "gameOver") return;
             let removede = 0;
+            let startingLocX = null;
+            let longMap = [];
+            let removedCell = null;
+            let sensored = [];
+            let removedNears = null;
+            let startingLocY = 0;
             for (let i = 0; i < this.cells.length; i++) {
-                if(this.cells[i - removede].hp == 0) {this.cells.splice(i - removede, 0); removede++};
                 this.buildPlaces.unshift(...this.cells[i - removede].getAllNear());
+                if(this.cells[i - removede].hp == 0) {
+                    startingLocX = this.cells[i].x;
+                    startingLocY = this.cells[i].y;
+                    removedCell = this.cells[i];
+                    this.cells.splice(i - removede, 1); 
+                    removede++;
+                };
+            }
+            if(removedCell != null) {
+                var cellGroups = [];
+                removedNears = removedCell.getAllNear();
+                for(let i = 0; i < removedNears.length; i++) {
+                    if(game.collide(this.cells, removedNears[i], "boo")) {
+                        cellGroups.unshift([game.collide(this.cells, removedNears[i], "object")]);
+                    }
+                }
+                let numu = 0;
+                let a = (root, cell) => {
+                    let anears = cell.getAllNear();
+                    for(let i = 0; i < anears.length; i++) {
+                        if(game.collide(this.cells, anears[i], "boo") && !this.sensorContain(sensored, game.collide(this.cells, anears[i], "object")) && !this.sensorContain(root, game.collide(this.cells, anears[i], "object"))) {
+                            root.unshift(game.collide(this.cells, anears[i], "object"));
+                            sensored.unshift(game.collide(this.cells, anears[i], "object"));
+                            a(root, game.collide(this.cells, anears[i], "object"));
+                        }
+                    }
+                }
+                for(let i = 0; i < cellGroups.length; i++) {
+                    a(cellGroups[i], cellGroups[i][0]);
+                }
+                console.log(sensored);
+                console.log(cellGroups);
+                for(let i = 0; i < cellGroups.length; i++) {
+                    longMap.push(cellGroups[i].length)
+                }
+                let still = cellGroups[longMap.indexOf(Math.max(...longMap))];
+                let removeded = 0;
+                for(let i = 0; i < cellGroups.length; i++) {
+                    if(cellGroups[i-removeded] != still) {
+                        cellGroups.splice(i - removeded, 1);
+                        removeded++;
+                    }
+                }
+                console.log(cellGroups);
+                console.log(longMap);
+                this.cells = cellGroups[0]      ;
+                this.groupDebug = cellGroups;
             }
             this.buildPlaces = this.buildPlaces.filter((obj1, i, arr) =>
                 arr.findIndex(obj2 =>
                     JSON.stringify(obj2) === JSON.stringify(obj1)
                 ) === i
             );
+            
             let removed = 0;
             for (let i = 0; i < this.buildPlaces.length; i++) {
                 if (game.collide(game.objects, this.buildPlaces[i - removed], "boo") || game.collide(this.cells, this.buildPlaces[i - removed], "boo")) {
@@ -480,6 +552,11 @@ class player {
                     this.buildPlaces[i].active = true;
                 }
             }
+            if(this.cells.length == 0) {
+                gameOver();
+                console.log("a");
+            }
+            if(game.actualScene == "gameOver") return;
             for (let i = 0; i < this.cells.length; i++) {
                 if(this.cells[i].action !== undefined) {
                     if (game.clicking) {
@@ -491,6 +568,29 @@ class player {
                     }
                 }
                 game.render(this.cells[i]);
+                game.drawText(camera.getRelativeX(this.cells[i].x), camera.getRelativeY(this.cells[i].y), this.cells[i].hp, "serif", this.cells[i].ysize, "red");
+            }
+            if(this.groupDebug != null) {
+                for(let i = 0; i < this.groupDebug.length; i++) {
+                    for(let j = 0; j < this.groupDebug[i].length; j++) {
+                        if(i == 0) {
+                            ctx.fillStyle = "red";
+                        } else {
+                            ctx.fillStyle = "blue";
+                        }
+                        ctx.fillRect(this.groupDebug[i][j].x,this.groupDebug[i][j].y, this.groupDebug[i][j].xsize, this.groupDebug[i][j].ysize );
+                    } 
+                }
+            }
+            if(cellGroups !== undefined) {
+                for(let i = 0; i < cellGroups.length; i++) {
+                    if(cellGroups[i].length === undefined) continue;
+                    for(let j = 0; j < cellGroups[i].length; j++) {
+                        if(i == 0) ctx.fillStyle = "red";
+                        if(i == 1) ctx.fillStyle = "blue";
+                        ctx.fillRect(cellGroups[i][j].x, cellGroups[i][j].y, cellGroups[i][j].xsize, cellGroups[i][j].ysize);
+                    }
+                }
             }
             for (let i = 0; i < this.buildPlaces.length; i++) {
                 if (game.clicking) {

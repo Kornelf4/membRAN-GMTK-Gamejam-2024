@@ -21,6 +21,7 @@ class virus{
         this.xsize = game.girdSize - 10;
         this.ysize = game.girdSize - 10;
         this.hasLayers = true;
+        this.hp = 1;
         this.type = "virus";
         this.collectable = true; //wtf
         this.name = "virus";
@@ -108,12 +109,16 @@ class virus{
             {type: "flipbook", frames: 3, timing: 10, phase: 0, name: "Move", active: true, sine: false, inverse: false, actualFrameIndex: 0, rotation: this.heading * 90}
         ];
         this.start = function() {
-            if(game.collide(game.objects, this, "boo")) {
+            let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
+            if(game.collide(game.objects, this, "boo") || game.collide(player2.cells, this, "boo")) {
                 game.objects.splice(game.objects.indexOf(this), 1);
             }
         }
         this.update = function() {
             this.rotation = this.heading * 90;
+            if(this.hp <= 0) {
+                game.objects.splice(game.objects.indexOf(this), 1);
+            }
             if (game.clicking) {
                 if (game.isOverlap(this, { x: game.cursorX, y: game.cursorY, xsize: 2, ysize: 2 })) {
                     console.log(this.heading);
@@ -130,7 +135,10 @@ class virus{
                 }*/
                 if(collision) {
                     if(this.angeledCollide(this, this.heading, true) != false) {
+                        let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
+
                         this.angeledCollide(this, this.heading, true).hp--;
+
                         game.objects.splice(game.objects.indexOf(this), 1);
                     }
                     rotate(rotateType, this);

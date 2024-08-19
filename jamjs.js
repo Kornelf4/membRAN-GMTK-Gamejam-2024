@@ -159,7 +159,7 @@ let game = {
         }
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
         if (camera === undefined) {
-            console.error(new ReferenceError("Failed to update mouse position (can't found camera object)   -> returning"));
+            //console.error(new ReferenceError("Failed to update mouse position (can't found camera object)   -> returning"));
             return;
         }
         /*let rect = game.canvas.getBoundingClientRect();
@@ -323,7 +323,7 @@ let game = {
             if (game.isOverlap(obj, array[i])) {
                 if (returntype == "boo") {
                     if(obj.constructor.name == "virus") {
-                        console.log(array[i]);
+                        
                     }
                     return true; 
                 }; //Is collided with anything?
