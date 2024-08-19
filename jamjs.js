@@ -335,7 +335,7 @@ let game = {
             } else {
                 if (returntype == "boo") //return false;
                 if (returntype == "object" || returntype == "sorted") {
-                    console.error(new ReferenceError("Warning! Can not return object from collide when not overlap. Try another return type. Actual return type: " + returntype + " -> returned false"));
+                    //console.error(new ReferenceError("Warning! Can not return object from collide when not overlap. Try another return type. Actual return type: " + returntype + " -> returned false"));
                     //return false;
                 }
             }

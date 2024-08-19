@@ -193,6 +193,7 @@ let cellTypes = {
         this.y = y;
         this.energyCost = 3;
         this.xsize = game.girdSize;
+        this.hp = 2;
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.type = "cell";
@@ -230,6 +231,7 @@ let cellTypes = {
         this.x = x;
         this.y = y;
         this.xsize = game.girdSize;
+        this.hp = 1;
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.heat = 0;
@@ -275,6 +277,7 @@ let cellTypes = {
     acidicMiner: function(x, y) {
         this.x = x;
         this.y = y;
+        this.hp = 3;
         this.xsize = game.girdSize;
         this.ysize = game.girdSize;
         this.hasLayers = true;
@@ -459,8 +462,10 @@ class player {
                     }
                 }
             }
+            let removede = 0;
             for (let i = 0; i < this.cells.length; i++) {
-                this.buildPlaces.unshift(...this.cells[i].getAllNear());
+                if(this.cells[i - removede].hp == 0) {this.cells.splice(i - removede, 0); removede++};
+                this.buildPlaces.unshift(...this.cells[i - removede].getAllNear());
             }
             this.buildPlaces = this.buildPlaces.filter((obj1, i, arr) =>
                 arr.findIndex(obj2 =>

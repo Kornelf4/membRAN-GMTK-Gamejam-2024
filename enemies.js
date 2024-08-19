@@ -22,12 +22,14 @@ class virus{
         this.ysize = game.girdSize - 10;
         this.hasLayers = true;
         this.type = "virus";
+        this.collectable = true; //wtf
         this.name = "virus";
         this.scene = game.actualScene;
         this.ui = false;
         this.speed = 4;
-        this.angeledCollide = function (cell, heading) {
+        this.angeledCollide = function (cell, heading, player) {
             let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
+            let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
             let cella = cell;
             switch (heading) {
                 case 3:
@@ -37,7 +39,11 @@ class virus{
                     cella.ysize -=2;
                     //ctx.fillRect(camera.getRelativeX(cell.x - 2),camera.getRelativeY(cell.y + 2), cell.xsize + 2, cell.ysize - 2 );
                     //return game.collide(game.objects, {  x: cell.x - 2, y: cell.y + 2, xsize: cell.xsize + 2, ysize: cell.ysize - 2 }, "boo", { property: "canCollide", value: true });
-                    var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    if(player == true) {
+                        var c = game.collide(player2.cells, cella, "object");
+                    } else {
+                        var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    }
                     cella.x += 2;
                     cella.y -= 2;
                     cella.xsize -= 2;
@@ -51,7 +57,11 @@ class virus{
                     cella.ysize -=2;
                     //ctx.fillRect(camera.getRelativeX(cell.x), camera.getRelativeY(cell.y + 2), cell.xsize + 2, cell.ysize - 2)
                     //return game.collide(game.objects, { x: cell.x, y: cell.y + 2, xsize: cell.xsize + 2, ysize: cell.ysize - 2 }, "boo", { property: "canCollide", value: true });
-                    var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    if(player == true) {
+                        var c = game.collide(player2.cells, cella, "object");
+                    } else {
+                        var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    }
                     cella.x -= 0;
                     cella.y -= 2;
                     cella.xsize -= 2;
@@ -63,7 +73,11 @@ class virus{
                     cella.xsize -= 2;
                     cella.ysize += 2;
                     //ctx.fillRect(camera.getRelativeX(cell.x + 2), camera.getRelativeY(cell.y - 2), cell.xsize - 2, cell.ysize + 2 )
-                    var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    if(player == true) {
+                        var c = game.collide(player2.cells, cella, "object");
+                    } else {
+                        var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    }
                     cella.x -= 2;
                     cella.y += 2;
                     cella.xsize += 2;
@@ -75,7 +89,11 @@ class virus{
                     cella.xsize -= 2;
                     cella.ysize += 2;
                     //ctx.fillRect(camera.getRelativeX(cell.x + 2),camera.getRelativeY(cell.y), cell.xsize - 2, cell.ysize + 2 )
-                    var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    if(player == true) {
+                        var c = game.collide(player2.cells, cella, "object");
+                    } else {
+                        var c = game.collide(game.objects, cella, "moving", { property: "canCollide", value: true });
+                    }
                     cella.x -= 2;
                     cella.y += 0;
                     cella.xsize += 2;
@@ -102,17 +120,22 @@ class virus{
                 }
             }
             let num = 0;
+            var rotateType = getRndInteger(0,1);
             let a = () => {
                 num++;
-                let collision = this.angeledCollide(this, this.heading);
+                let collision = this.angeledCollide(this, this.heading) || this.angeledCollide(this, this.heading, true);
                 
                 /*for(let i = 0; i < game.objects.length; i++) {
                     game.isOverlap(game.objects[i], this);
                 }*/
                 if(collision) {
-                    rotate(getRndInteger(0, 1), this);
+                    if(this.angeledCollide(this, this.heading, true) != false) {
+                        this.angeledCollide(this, this.heading, true).hp--;
+                        game.objects.splice(game.objects.indexOf(this), 1);
+                    }
+                    rotate(rotateType, this);
                     let collisionNext = this.angeledCollide(this, this.heading);
-                    if(!collisionNext) return; 
+                    if(!collisionNext) return;
                     if(num < 10) return;
                     if(collisionNext) a();
                 } else {
