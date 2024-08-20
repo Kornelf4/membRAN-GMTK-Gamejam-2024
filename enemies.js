@@ -140,7 +140,7 @@ class virus{
                         this.angeledCollide(this, this.heading, true).hp--;
                         game.objects.splice(game.objects.indexOf(this), 1);
                     }
-                    rotate(rotateType, this);
+                    rotate(getRndInteger(0,1), this);
                     let collisionNext = this.angeledCollide(this, this.heading);
                     if(!collisionNext) return;
                     if(num < 10) return;

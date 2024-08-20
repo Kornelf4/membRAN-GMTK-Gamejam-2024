@@ -68,8 +68,9 @@ function start() {
         src: "deathMatter.png",
         canColide: true
     };
+    game.objects.unshift(new toDrawImage(0, 0, 900, 800, "bakt.png"));
     game.objects.unshift(new game.camera(0, 0));
-    game.objects.unshift(new button(500, 400, 100, 50, "red", "PLAY", function () {
+    game.objects.unshift(new button(750, 400, 100, 50, "red", "PLAY", function () {
         game.actualScene = "game1";
         game.rawTileMap = maps["game1"];
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
@@ -87,6 +88,7 @@ function start() {
         game.objects.push(new sideBar(200));
         game.objects[game.objects.length - 1].start();
         game.objects.unshift(new winPortal(16 * game.girdSize, 26 * game.girdSize));
+        game.objects[0].start();
         console.log(game.objects[game.objects.length - 1]);
         game.objects.push(new updatedText(10, 400, 50, "black", function () {
             let player = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
@@ -94,6 +96,10 @@ function start() {
             game.render(this);
         }));
     }));
+    game.objects.unshift(new button(700, 600, 170, 50, "green", "how to play", function() {
+        window.open("read.pdf");
+    }))
+    game.objects.push(new textBox(40, 40, "membRUN", 100, "green"));
     game.startAll();
     setInterval("tick()", 20);
 }

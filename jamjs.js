@@ -281,6 +281,9 @@ let game = {
         for (let i = 0; i < game.objects.length; i++) {
             if (game.objects[i].scene == game.actualScene && game.objects[i].type != "camera") {
                 game.render(game.objects[i]);
+                if(game.objects[i].render !== undefined) {
+                    game.objects[i].render();
+                }
             }
         }
     },
