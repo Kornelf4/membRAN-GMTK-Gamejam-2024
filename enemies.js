@@ -138,7 +138,6 @@ class virus{
                         let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
 
                         this.angeledCollide(this, this.heading, true).hp--;
-
                         game.objects.splice(game.objects.indexOf(this), 1);
                     }
                     rotate(rotateType, this);

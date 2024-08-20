@@ -194,7 +194,7 @@ let cellTypes = {
         this.y = y;
         this.energyCost = 3;
         this.xsize = game.girdSize;
-        this.hp = 1;
+        this.hp = 2;
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.type = "cell";
@@ -203,6 +203,13 @@ let cellTypes = {
         this.scene = game.actualScene;
         this.ui = false;
         this.visible = true;
+        this.action = function(parent) {
+            if(game.deleteMode) {
+                if(parent.energy >= 1) {
+                    parent.cells.splice(parent.cells.indexOf(this), 1);
+                }
+            }
+        }
         this.canCollide = true;
         this.getAllNear = function () {
             let a = [];
@@ -246,6 +253,13 @@ let cellTypes = {
         }
         this.spawnCell = false;
         this.energyCost = 6;
+        this.action = function(parent) {
+            if(game.deleteMode) {
+                if(parent.energy >= 1) {
+                    parent.cells.splice(parent.cells.indexOf(this), 1);
+                }
+            }
+        }
         this.name = "photoCell";
         this.scene = game.actualScene;
         this.ui = false;
@@ -293,6 +307,11 @@ let cellTypes = {
             this.ready = true;
         }
         this.action = function(parent) {
+            if(game.deleteMode) {
+                if(parent.energy >= 1) {
+                    parent.cells.splice(parent.cells.indexOf(this), 1);
+                }
+            }
             let nears = this.getAllNear();
             let toDelete = [];
             if(this.tick < 10) return;
@@ -570,7 +589,7 @@ class player {
                 game.render(this.cells[i]);
                 game.drawText(camera.getRelativeX(this.cells[i].x), camera.getRelativeY(this.cells[i].y), this.cells[i].hp, "serif", this.cells[i].ysize, "red");
             }
-            if(this.groupDebug != null) {
+            /*if(this.groupDebug != null) {
                 for(let i = 0; i < this.groupDebug.length; i++) {
                     for(let j = 0; j < this.groupDebug[i].length; j++) {
                         if(i == 0) {
@@ -581,8 +600,8 @@ class player {
                         ctx.fillRect(this.groupDebug[i][j].x,this.groupDebug[i][j].y, this.groupDebug[i][j].xsize, this.groupDebug[i][j].ysize );
                     } 
                 }
-            }
-            if(cellGroups !== undefined) {
+            }*/
+            /*if(cellGroups !== undefined) {
                 for(let i = 0; i < cellGroups.length; i++) {
                     if(cellGroups[i].length === undefined) continue;
                     for(let j = 0; j < cellGroups[i].length; j++) {
@@ -591,7 +610,14 @@ class player {
                         ctx.fillRect(cellGroups[i][j].x, cellGroups[i][j].y, cellGroups[i][j].xsize, cellGroups[i][j].ysize);
                     }
                 }
-            }
+            }*/
+           if(game.deleteMode) {
+            let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
+                for(let i = 0; i < this.cells.length; i++) {
+                    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+                    ctx.fillRect(camera.getRelativeX(this.cells[i].x), camera.getRelativeY(this.cells[i].y), game.girdSize, game.girdSize)
+                }
+           }
             for (let i = 0; i < this.buildPlaces.length; i++) {
                 if (game.clicking) {
                     if (game.isOverlap(this.buildPlaces[i], { x: game.cursorX + camera.x, y: game.cursorY + camera.y, xsize: 2, ysize: 2 }) && this.buildPlaces[i].active) {
@@ -620,5 +646,59 @@ class player {
                 }
             }
         }
+    }
+}
+class portalFragment {
+    constructor(x, y) {
+        this.x = x; 
+        this.y = y;
+        this.xsize = game.girdSize;
+        this.ysize = game.girdSize;
+        this.scene = game.actualScene;
+        this.active = false;
+        this.ui = false;
+        this.visible = true;
+        this.rotation  = 0;
+        this.update = ()  => {
+            let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
+            let a = false;
+            for(let i = 0; i < player2.cells.length; i++) {
+                if(player2.cells[i].x.toFixed(0) == this.x && player2.cells[i].y.toFixed(0) == this.y) a = true;
+            }
+            this.active = a;
+        }
+        this.collectable = true;
+        this.hasLayers = true;
+        this.layers = [
+            {src: "portalFragment.png", img: game.getSprite("portalFragment.png", this.xsize, this.ysize), type: "image"}
+        ];
+    }
+}
+class winPortal {
+    constructor(x, y) {
+        this.x = x;
+        this.scene = game.actualScene;
+        this.ui = false;
+        this.y = y;
+        this.ui = false;
+        this.xsize = 0;
+        this.ysize = 0;
+        this.type = "winportal";
+        this.visible = false;
+        this.update = () => {
+            let a = true;;
+            for(let i = 0; i < this.segments.length; i++) {
+                this.segments[i].update();
+                game.render(this.segments[i]);
+                if(!this.segments[i].active) a = false;
+            }
+            if(a) gameWin();
+        }
+        this.name =  "winportal";
+        this.segments = [new portalFragment(this.x, this.y), new portalFragment(this.x + game.girdSize, this.y), new portalFragment(this.x + game.girdSize * 2, this.y) /*first*/,
+             new portalFragment(this.x, this.y + game.girdSize), new portalFragment(this.x + game.girdSize, this.y + game.girdSize), new portalFragment(this.x + game.girdSize * 2, this.y + game.girdSize),//second
+             new portalFragment(this.x, this.y + game.girdSize * 2), new portalFragment(this.x + game.girdSize, this.y + game.girdSize * 2), new portalFragment(this.x + game.girdSize * 2, this.y + game.girdSize * 2)
+             ]
+
     }
 }

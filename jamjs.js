@@ -253,6 +253,8 @@ let game = {
             }
         } else { //image: {img: img, src: image.png, rotation: 0}
             if (obj.image === undefined) {
+                console.log(obj.x / game.girdSize);
+                console.log(obj.y/ game.girdSize);
                 console.error(new ReferenceError("Cant render object withuot image or layers. Objects name: " + obj.name + "   -> Returning"));
                 return;
             }
