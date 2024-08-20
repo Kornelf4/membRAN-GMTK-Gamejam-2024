@@ -120,6 +120,21 @@ class bubble {
         }
     }
 }
+class worldBorder {
+    constructor(x, y, xsize, ysize) {
+        this.x = x;
+        this.y = y;
+        this.xsize = xsize;
+        this.ysize = ysize;
+        this.hasLayers = false;
+        this.type = "border";
+        this.name = "worldBorder";
+        this.scene = game.actualScene;
+        this.ui = false;
+        this.visible = false;
+        this.canCollide = true;
+    }
+}
 class textBox {
     constructor(x, y, text, size, color) {
         this.x = x;
@@ -211,7 +226,7 @@ let cellTypes = {
         this.y = y;
         this.energyCost = 3;
         this.xsize = game.girdSize;
-        this.hp = 2;
+        this.hp = 1;
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.type = "cell";
@@ -223,6 +238,7 @@ let cellTypes = {
         this.action = function (parent) {
             if (game.deleteMode) {
                 if (parent.energy >= 1) {
+                    parent.removedCell = this;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -269,6 +285,7 @@ let cellTypes = {
         this.action = function (parent) {
             if (game.deleteMode) {
                 if (parent.energy >= 1) {
+                    parent.removedCell = this;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -319,6 +336,7 @@ let cellTypes = {
         this.action = function (parent) {
             if (game.deleteMode) {
                 if (parent.energy >= 1) {
+                    parent.removedCell = this;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -372,6 +390,7 @@ let cellTypes = {
         this.action = function (parent) {
             if (game.deleteMode) {
                 if (parent.energy >= 1) {
+                    parent.removedCell = this;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -379,7 +398,7 @@ let cellTypes = {
             let toDelete = [];
             if (this.tick < 10) return;
             if (!this.ready) return;
-            if (parent.energy < 2.5) return;
+            if (parent.energy < 2) return;
             for (let i = 0; i < nears.length; i++) {
                 toDelete.unshift(...game.collide(game.objects, nears[i], "multi"))
             }
@@ -472,8 +491,9 @@ class player {
         this.hasLayers = true;
         this.type = "player";
         this.groupDebug = null;
-        this.energy = 50;
+        this.energy = 15;
         this.name = "player";
+        this.removedCell = null;
         this.scene = game.actualScene;
         this.ui = false;
         this.collectable = true;
@@ -481,7 +501,6 @@ class player {
         this.speed = 5;
         this.render = () => {
             let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
-
             if (game.deleteMode) {
                 let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
                 for (let i = 0; i < this.cells.length; i++) {
@@ -498,17 +517,11 @@ class player {
                 }
             }
             for (let i = 0; i < this.cells.length; i++) {
-                if (this.cells[i].action !== undefined) {
-                    if (game.clicking) {
-                        if (game.isOverlap(this.cells[i], { x: game.cursorX + camera.x, y: game.cursorY + camera.y, xsize: 2, ysize: 2 }) && this.cells[i].ready) {
-                            this.cells[i].action(this);
-                        }
-                    } else {
-                        this.cells[i].ready = true;
-                    }
-                }
+                
                 game.render(this.cells[i]);
-                game.drawText(camera.getRelativeX(this.cells[i].x), camera.getRelativeY(this.cells[i].y), this.cells[i].hp, "serif", this.cells[i].ysize, "red");
+
+                
+                game.drawText(camera.getRelativeX(this.cells[i].x), camera.getRelativeY(this.cells[i].y), this.cells[i].hp, "brush script mt", this.cells[i].ysize/ 1.5, "red");
             }
         }
         this.layers = [];
@@ -537,6 +550,7 @@ class player {
         }
         this.cells = [new cellTypes.baseCell(this.x, this.y)];
         this.update = () => {
+            this.removedCell = null;
             this.buildPlaces = [];
             let collided = false;
             let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
@@ -592,6 +606,17 @@ class player {
                     }
                 }
             }
+            for(let i = 0; i < this.cells.length; i++) {
+                if (this.cells[i].action !== undefined) {
+                    if (game.clicking) {
+                        if (game.isOverlap(this.cells[i], { x: game.cursorX + camera.x, y: game.cursorY + camera.y, xsize: 2, ysize: 2 }) && this.cells[i].ready) {
+                            this.cells[i].action(this);
+                        }
+                    } else {
+                        this.cells[i].ready = true;
+                    }
+                }
+            }
             if (this.cells.length == 0) {
                 gameOver();
                 console.log("a")
@@ -600,7 +625,7 @@ class player {
             let removede = 0;
             let startingLocX = null;
             let longMap = [];
-            let removedCell = null;
+            
             let sensored = [];
             let removedNears = null;
             let startingLocY = 0;
@@ -609,14 +634,14 @@ class player {
                 if (this.cells[i - removede].hp == 0) {
                     startingLocX = this.cells[i].x;
                     startingLocY = this.cells[i].y;
-                    removedCell = this.cells[i];
+                    this.removedCell = this.cells[i];
                     this.cells.splice(i - removede, 1);
                     removede++;
                 };
             }
-            if (removedCell != null) {
+            if (this.removedCell != null) {
                 var cellGroups = [];
-                removedNears = removedCell.getAllNear();
+                removedNears = this.removedCell.getAllNear();
                 for (let i = 0; i < removedNears.length; i++) {
                     if (game.collide(this.cells, removedNears[i], "boo")) {
                         cellGroups.unshift([game.collide(this.cells, removedNears[i], "object")]);
@@ -662,8 +687,13 @@ class player {
 
             let removed = 0;
             for (let i = 0; i < this.buildPlaces.length; i++) {
+                let winp= game.objects[game.findObjectWithProp(game.objects, "type", "winportal")];
                 if (game.collide(game.objects, this.buildPlaces[i - removed], "boo") || game.collide(this.cells, this.buildPlaces[i - removed], "boo")) {
-                    this.buildPlaces[i].active = false;
+                    if(game.collide(game.objects, this.buildPlaces[i - removed], "object").name == "organicMatter"/* || game.collige(game.objects, this.buildPlaces[i - removed], "object").name == "portalFragment"*/) {
+                        this.buildPlaces[i].active = true;
+                    } else {
+                        this.buildPlaces[i].active = false;
+                    }
                 } else {
                     this.buildPlaces[i].active = true;
                 }
@@ -704,6 +734,7 @@ class portalFragment {
         this.y = y;
         this.xsize = game.girdSize;
         this.ysize = game.girdSize;
+        this.name = "portalFragment";
         this.scene = game.actualScene;
         this.active = false;
         this.ui = false;

@@ -117,6 +117,7 @@ class virus{
         this.update = function() {
             this.rotation = this.heading * 90;
             if(this.hp <= 0) {
+                game.objects.unshift(new organicMatter(this.x, this.y, 30))
                 game.objects.splice(game.objects.indexOf(this), 1);
             }
             if (game.clicking) {

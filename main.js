@@ -34,8 +34,8 @@ function spawnViruses() {
     game.objects[game.objects.length - 1].start();
 }
 function tick() {
+    let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
     if(game.actualScene == "game1") {
-        let player2 = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
         if(player2.cells=== undefined) gameOver();
     }
     game.renderWorld();
@@ -50,6 +50,9 @@ function tick() {
         }
     }
     game.updateAll();
+    if(game.actualScene == "game1") {
+        player2.render();
+    }
 }
 
 function start() {
@@ -81,13 +84,18 @@ function start() {
         game.addTilesToObjects();
         game.deleteMode = false;
         game.showBuildArea = false;
-        game.objects.unshift(new player(4 * game.girdSize, 4 * game.girdSize));
+        
         game.objects.unshift(new bubble(300, 350));
+        game.objects.unshift(new worldBorder(-1,-1, 1, maps[game.actualScene].length * game.girdSize));
+        game.objects.unshift(new worldBorder(-1,-1, maps[game.actualScene][0].length * game.girdSize, 1));
+        game.objects.unshift(new worldBorder(-1,maps[game.actualScene].length * game.girdSize, maps[game.actualScene][0].length * game.girdSize, 1));
+        game.objects.unshift(new worldBorder(maps[game.actualScene][0].length * game.girdSize,-1, 1, maps[game.actualScene].length * game.girdSize));
         game.objects.push(new button(20, 20, 120, 30, "lightgreen", "BUILD CELL", function () { game.showBuildArea = !game.showBuildArea }));
-        game.objects.push(new button(20, 70, 120, 30, "red", "DELETE CELL", function () { game.deleteMode = !game.deleteMode }));
+        game.objects.push(new button(20, 70, 150, 30, "red", "DELETE CELL", function () { game.deleteMode = !game.deleteMode }));
         game.objects.push(new sideBar(200));
         game.objects[game.objects.length - 1].start();
         game.objects.unshift(new winPortal(16 * game.girdSize, 26 * game.girdSize));
+        game.objects.push(new player(4 * game.girdSize, 4 * game.girdSize));
         game.objects[0].start();
         console.log(game.objects[game.objects.length - 1]);
         game.objects.push(new updatedText(10, 400, 50, "black", function () {
@@ -96,11 +104,19 @@ function start() {
             game.render(this);
         }));
     }));
-    game.objects.unshift(new button(700, 600, 170, 50, "green", "how to play", function() {
+    game.objects.unshift(new button(700, 500, 170, 50, "green", "how to play", function() {
         window.open("read.pdf");
     }))
     game.objects.push(new textBox(40, 40, "membRUN", 100, "green"));
     game.startAll();
     setInterval("tick()", 20);
 }
+window.addEventListener("click", event => {
+    const audio = document.querySelector("audio");
+    audio.volume = 0.06;
+    //if(game.actualScene == "game1") {
+        audio.play();
+    //}
+    
+});
 start();

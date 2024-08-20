@@ -5,7 +5,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "file": "e:\\fefe adat\\Dokumentumok\\akod\\gameJam2024\\gameJamgame2024\\main.html"
+            "file": "e:\\fefe adat\\Dokumentumok\\akod\\gameJam2024\\gameJamgame2024\\index.html"
         }
     ]
 }
