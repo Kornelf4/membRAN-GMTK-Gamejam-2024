@@ -18,3 +18,5 @@ Unzip the folder.
 Double click at the index.html.
 
 (File structure is trash. I will fix it soon)
+
+### Tutorial in the game i think
