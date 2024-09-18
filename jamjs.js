@@ -1,3 +1,34 @@
+class waveEffect {
+    constructor(centerX, centerY, lifetime, color, radiusChange) {
+        this.x = centerX;
+        this.y = centerY;
+        this.hasLayers = true;
+        this.layers = [];
+        this.type = "effect";
+        this.radius = 0;
+        this.scene = game.actualScene;
+        this.radiusChange = radiusChange;
+        this.lifetime = lifetime;
+        this.color = color;
+        this.delete = () => {
+            game.objects.splice(game.objects.indexOf(this), 1);
+        }
+        this.update = () => {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 20;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true);
+            ctx.stroke();
+            ctx.closePath();
+            this.lifetime--;
+            console.log("a");
+            this.radius += this.radiusChange;
+            if (this.lifetime == 0) {
+                this.delete();
+            }
+        }
+    }
+}
 let game = {
     canvas: document.getElementById("canvas"),
     objects: [], //1d
@@ -24,9 +55,9 @@ let game = {
         console.error(new ReferenceError("Scene not found: " + sceneName + " -> returned with false"));
         return false;
     },
-    debugObjects: function() {
-        for(let i = 0; i <game.objects.length; i++) {
-            if(game.objects[i].scene != game.actualScene || game.objects[i].type == "camera") continue;
+    debugObjects: function () {
+        for (let i = 0; i < game.objects.length; i++) {
+            if (game.objects[i].scene != game.actualScene || game.objects[i].type == "camera") continue;
             ctx.fillStyle = "black";
             ctx.fillRect(game.objects[i].x, game.objects[i].y, 10, 10);
             ctx.fillRect(game.cursorX, game.cursorY, 5, 5);
@@ -60,7 +91,7 @@ let game = {
         this.scene = game.actualScene;
         this.name = name;
         this.visible = true;
-        this.update = function() {
+        this.update = function () {
             game.render(this);
         }
         this.scene = game.actualScene;
@@ -91,7 +122,7 @@ let game = {
         for (let i = 0; i < game.rawTileMap.length; i++) {
             for (let j = 0; j < game.rawTileMap[i].length; j++) {
                 let tile = game.rawTileMap[i][j];
-                if(tile == "0") continue;
+                if (tile == "0") continue;
                 let tileName = game.findTileName(tile);
                 game.objects.unshift(new game.tile(j * game.girdSize, i * game.girdSize, tileName));
             }
@@ -170,35 +201,35 @@ let game = {
         game.cursorX = x.toFixed(0);
         game.cursorY = y.toFixed(0);*/
     },
-    drawText: function(x, y, text, fontStyle, fontSize, color) {
+    drawText: function (x, y, text, fontStyle, fontSize, color) {
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
         ctx.fillStyle = color;
-        ctx.font = (fontSize).toString()+"px "+fontStyle;
+        ctx.font = (fontSize).toString() + "px " + fontStyle;
         ctx.fillText(text, x, y + fontSize);
     },
     render: function (obj) { //Draw an objects layers. Layers can be animaions (flipbook: all the frames in one long image)(of the animation not active, draw the first frame), images. 
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
-        if(obj.ui == true) {
+        if (obj.ui == true) {
             var calculatedX = obj.x;
             var calculatedY = obj.y;
         } else {
             var calculatedX = camera.getRelativeX(obj.x);
             var calculatedY = camera.getRelativeY(obj.y);
         }
-        
-        if(obj == camera) return;
+
+        if (obj == camera) return;
         if (!game.isOverlap(obj, camera) && obj.ui == false) return; //do not draw when cant see the object
         if (camera === undefined) {
             console.error(new ReferenceError("Camera object can't be found. Be cure you have a canera object or an object with type: camera, x, y property and getRelativeX() and getRelativeY() methodx. -> Returning. Didn't rendered"));
             return;
         }
-        if(!obj.visible) return;
+        if (!obj.visible) return;
         if (obj.hasLayers == true) {
             for (let i = 0; i < obj.layers.length; i++) {
-                if(obj.layers[i].relX !== undefined) {
+                if (obj.layers[i].relX !== undefined) {
                     calculatedX += obj.layers[i].relX;
                 }
-                if(obj.layers[i].relY !== undefined) {
+                if (obj.layers[i].relY !== undefined) {
                     calculatedY += obj.layers[i].relY;
                 }
                 if (obj.layers[i].type == "flipbook") { //{type: "flipbook",active: true, img: img, rotation: 0, frames: 3, timing: 10, phase: 0; actualFrameIndex, invert: false, sine: false}
@@ -239,22 +270,30 @@ let game = {
                 } else if (obj.layers[i].type == "image") {
                     game.drawImage(obj.layers[i].img, calculatedX, calculatedY, obj.xsize, obj.ysize, obj.rotation);
                 } else if (obj.layers[i].type == "text") {
-                    game.drawText(calculatedX, calculatedY, obj.layers[i].text, obj.layers[i].style, obj.layers[i].size, obj.layers[i].color);
+                    if (obj.layers[i].center) {
+                        game.drawText(calculatedX + obj.xsize / 2 - obj.layers[i].size, calculatedY + obj.ysize / 2 - obj.layers[i].size, obj.layers[i].text, obj.layers[i].style, obj.layers[i].size, obj.layers[i].color);
+                    } else {
+                        game.drawText(calculatedX, calculatedY, obj.layers[i].text, obj.layers[i].style, obj.layers[i].size, obj.layers[i].color);
+                    }
                 } else if (obj.layers[i].type == "filled") {
                     ctx.fillStyle = obj.layers[i].color;
-                    ctx.fillRect(calculatedX, calculatedY, obj.xsize, obj.ysize);
+                    if (obj.sizePercent !== undefined) {
+                        ctx.fillRect(game.growToSize(obj, obj.sizePercent).x, game.growToSize(obj, obj.sizePercent).y, game.growToSize(obj, obj.sizePercent).xsize, game.growToSize(obj, obj.sizePercent).ysize);
+                    } else {
+                        ctx.fillRect(calculatedX, calculatedY, obj.xsize, obj.ysize);
+                    }
                 }
-                if(obj.layers[i].relX !== undefined) {
+                if (obj.layers[i].relX !== undefined) {
                     calculatedX -= obj.layers[i].relX;
                 }
-                if(obj.layers[i].relY !== undefined) {
+                if (obj.layers[i].relY !== undefined) {
                     calculatedY -= obj.layers[i].relY;
                 }
             }
         } else { //image: {img: img, src: image.png, rotation: 0}
             if (obj.image === undefined) {
                 console.log(obj.x / game.girdSize);
-                console.log(obj.y/ game.girdSize);
+                console.log(obj.y / game.girdSize);
                 console.error(new ReferenceError("Cant render object withuot image or layers. Objects name: " + obj.name + "   -> Returning"));
                 return;
             }
@@ -262,15 +301,15 @@ let game = {
         }
     },
     updateAll() {
-        for(let i = 0; i < game.objects.length; i++) {
-            if(game.objects[i].update !== undefined && game.objects[i].scene == game.actualScene) {
+        for (let i = 0; i < game.objects.length; i++) {
+            if (game.objects[i].update !== undefined && game.objects[i].scene == game.actualScene) {
                 game.objects[i].update();
             }
         }
     },
     startAll() {
-        for(let i = 0; i < game.objects.length; i++) {
-            if(game.objects[i].start !== undefined) {
+        for (let i = 0; i < game.objects.length; i++) {
+            if (game.objects[i].start !== undefined) {
                 game.objects[i].start();
             }
         }
@@ -281,30 +320,37 @@ let game = {
         for (let i = 0; i < game.objects.length; i++) {
             if (game.objects[i].scene == game.actualScene && game.objects[i].type != "camera") {
                 game.render(game.objects[i]);
-                if(game.objects[i].render !== undefined) {
+                if (game.objects[i].render !== undefined) {
                     game.objects[i].render();
                 }
             }
         }
     },
-    deleteObject: function(filter, type) {
+    growToSize: function (element, sizePercent) {
+        let xsizemod = element.xsize + ((element.xsize / 100) * sizePercent);
+        let ysizemod = element.ysize + ((element.ysize / 100) * sizePercent);
+        let xmod = element.x - ((element.xsize / 100) * sizePercent) / 2;
+        let ymod = element.y - ((element.ysize / 100) * sizePercent) / 2;
+        return { x: xmod, y: ymod, xsize: xsizemod, ysize: ysizemod };
+    },
+    deleteObject: function (filter, type) {
         let removed = 0;
-        switch(filter) {
+        switch (filter) {
             case "index":
                 game.objects.splice(type);
                 removed++;
                 break;
             case "withProp":
-                for(let i = 0; i < game.objects.length; i++) {
-                    if(game.objects[i][type.prop] == type.value) {
+                for (let i = 0; i < game.objects.length; i++) {
+                    if (game.objects[i][type.prop] == type.value) {
                         game.objects.splice(i - removed);
                         removed++;
                     }
                 }
                 break;
             case "firstWithProp":
-                for(let i = 0; i < game.objects.length; i++) {
-                    if(game.objects[i][type.prop] == type.value) {
+                for (let i = 0; i < game.objects.length; i++) {
+                    if (game.objects[i][type.prop] == type.value) {
                         game.objects.splice(i - removed);
                         removed++;
                         break;
@@ -318,8 +364,8 @@ let game = {
         let collides = []; //used in multiple collision detection
         for (let i = 0; i < array.length; i++) {
             if (array[i] === obj) continue;
-            if(array[i].type == "camera") continue;
-            if(array[i].scene != obj.scene && obj.scene !== undefined) {
+            if (array[i].type == "camera") continue;
+            if (array[i].scene != obj.scene && obj.scene !== undefined) {
                 /*console.log(obj.constructor.name);
                 console.log(typeof array[i])*/
                 continue;
@@ -327,25 +373,25 @@ let game = {
             if (array[i].canCollide == false) continue;
             if (game.isOverlap(obj, array[i])) {
                 if (returntype == "boo") {
-                    if(obj.constructor.name == "virus") {
-                        
+                    if (obj.constructor.name == "virus") {
+
                     }
-                    return true; 
+                    return true;
                 }; //Is collided with anything?
-                if(returntype == "moving" && !array[i].collectable) return true;
+                if (returntype == "moving" && !array[i].collectable) return true;
                 if (returntype == "object") return array[i]; //What is this colliding?
-                if((returntype == "objectsorted" &&  array[i][filter.property] == filter.value) && array[i][filter.property] !== undefined) return array[i];
+                if ((returntype == "objectsorted" && array[i][filter.property] == filter.value) && array[i][filter.property] !== undefined) return array[i];
                 if (returntype == "multi") collides.unshift(array[i]);  //What is this colliding? (return the array of collided objects)
                 if ((returntype == "sorted" && array[i][filter.property] == filter.value) && array[i][filter.property] !== undefined) return true; //The collided object has the filtered property with value?
             } else {
                 if (returntype == "boo") //return false;
-                if (returntype == "object" || returntype == "sorted") {
-                    //console.error(new ReferenceError("Warning! Can not return object from collide when not overlap. Try another return type. Actual return type: " + returntype + " -> returned false"));
-                    //return false;
-                }
+                    if (returntype == "object" || returntype == "sorted") {
+                        //console.error(new ReferenceError("Warning! Can not return object from collide when not overlap. Try another return type. Actual return type: " + returntype + " -> returned false"));
+                        //return false;
+                    }
             }
         }
-        if(returntype == "multi") {
+        if (returntype == "multi") {
             return collides;
         }
         return false;
@@ -361,10 +407,10 @@ let ctx = game.canvas.getContext("2d");
 let rect = game.canvas.getBoundingClientRect();
 game.canvasX = (game.canvas.getBoundingClientRect().left).toFixed(5);
 game.canvasY = (game.canvas.getBoundingClientRect().top).toFixed(5);
-game.canvas.onclick = function() {
+game.canvas.onclick = function () {
     game.clicking = !true;
 };
-window.onmousemove = function(e) {
+window.onmousemove = function (e) {
     let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
     game.cursorX = (e.clientX - game.canvasX) / (rect.right - game.canvasX) * parseFloat(game.canvas.width); // /1.68
     game.cursorY = (e.clientY - game.canvasY) / (rect.bottom - game.canvasY) * parseFloat(game.canvas.height); // //1.68
@@ -379,7 +425,7 @@ game.canvas.addEventListener("mousedown", function (e) {
     game.updateMousePosition(e);
 });
 function getRndInteger(min, max) {
-    return Math.floor(Math.random() * (max - min) ) + min;
+    return Math.floor(Math.random() * (max - min)) + min;
 }
 /*
 Description of all:

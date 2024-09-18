@@ -73,7 +73,7 @@ function start() {
     };
     game.objects.unshift(new toDrawImage(0, 0, 900, 800, "bakt.png"));
     game.objects.unshift(new game.camera(0, 0));
-    game.objects.unshift(new button(750, 400, 100, 50, "red", "PLAY", function () {
+    game.objects.unshift(new button(600, 400, 120, 50, "red", "PLAY", function () {
         game.actualScene = "game1";
         game.rawTileMap = maps["game1"];
         let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
@@ -104,7 +104,7 @@ function start() {
             game.render(this);
         }));
     }));
-    game.objects.unshift(new button(700, 500, 170, 50, "green", "how to play", function() {
+    game.objects.unshift(new button(600, 450, 200, 50, "green", "how to play", function() {
         window.open("read.pdf");
     }))
     game.objects.push(new textBox(40, 40, "membRUN", 100, "green"));

@@ -1,12 +1,15 @@
-
 class button {
     constructor(x, y, xsize, ysize, color, text, call) {
         this.x = x;
         this.y = y;
         this.xsize = xsize;
         this.ysize = ysize;
+        this.baseX = xsize;
+        this.baseY = ysize;
+        this.sizePercent = 0;
         this.hasLayers = true;
         this.type = "button";
+        this.hoverReady = true;
         this.name = "playButton";
         this.scene = game.actualScene;
         this.ready = true;
@@ -17,15 +20,22 @@ class button {
         this.color = color;
         this.layers = [
             { type: "filled", color: this.color },
-            { type: "text", text: text, color: "black", style: "serif", size: this.ysize / 1.5, relX: 3, relY: 3 }
+            { type: "text", text: text, color: "black", style: "serif", size: this.ysize / 1.5, relX: 3, relY: 3, center: false}
         ]
         this.update = () => {
             if (game.clicking) {
                 if (game.isOverlap(this, { x: game.cursorX, y: game.cursorY, xsize: 2, ysize: 2 }) && this.ready) {
-                    console.log("b");
                     this.call();
                     this.ready = false;
                 }
+            }
+            if (game.isOverlap(this, { x: game.cursorX, y: game.cursorY, xsize: 2, ysize: 2 }) && this.hoverReady) {
+                this.sizePercent = 20;
+                this.hoverReady = false;
+            }
+            if(!game.isOverlap(this, { x: game.cursorX, y: game.cursorY, xsize: 2, ysize: 2 }) && !this.hoverReady) {
+                this.sizePercent = 0;
+                this.hoverReady = true;
             }
             if (!game.clicking) {
                 this.ready = true;
@@ -200,7 +210,6 @@ function sideBar(xsize) {
             let actual = cellTypes[i];
             this.content.unshift(new imageButton(this.x + 50, (this.buttonSize + this.space) * i2 + this.space, this.buttonSize, this.buttonSize, "yellow", function () {
                 let player = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
-                console.log("a");
                 player.buildType = this.src;
             }, i, "Idle0.png"));
             this.content.unshift(new textBox(this.x + 110, (this.buttonSize + this.space) * i2 + this.space, new cellTypes[i](0, 0).energyCost, this.buttonSize, "black"));
@@ -211,7 +220,6 @@ function sideBar(xsize) {
         this.visible = game.showBuildArea;
         game.render(this);
         for (let i = 0; i < this.content.length; i++) {
-            //console.log(this.content[i]);
             this.content[i].visible = game.showBuildArea;
             if (this.content[i].update !== undefined) {
                 this.content[i].update()
@@ -237,8 +245,9 @@ let cellTypes = {
         this.visible = true;
         this.action = function (parent) {
             if (game.deleteMode) {
-                if (parent.energy >= 1) {
+                if (parent.energy >= 0.5) {
                     parent.removedCell = this;
+                    parent.energy -= 0.5;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -284,8 +293,9 @@ let cellTypes = {
         this.visible = true;
         this.action = function (parent) {
             if (game.deleteMode) {
-                if (parent.energy >= 1) {
+                if (parent.energy >= 0.5) {
                     parent.removedCell = this;
+                    parent.energy -= 0.5;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -335,8 +345,9 @@ let cellTypes = {
         this.energyCost = 6;
         this.action = function (parent) {
             if (game.deleteMode) {
-                if (parent.energy >= 1) {
+                if (parent.energy >= 0.5) {
                     parent.removedCell = this;
+                    parent.energy -= 0.5;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -389,8 +400,9 @@ let cellTypes = {
         }
         this.action = function (parent) {
             if (game.deleteMode) {
-                if (parent.energy >= 1) {
+                if (parent.energy >= 0.5) {
                     parent.removedCell = this;
+                    parent.energy -= 0.5;
                     parent.cells.splice(parent.cells.indexOf(this), 1);
                 }
             }
@@ -402,6 +414,8 @@ let cellTypes = {
             for (let i = 0; i < nears.length; i++) {
                 toDelete.unshift(...game.collide(game.objects, nears[i], "multi"))
             }
+            game.objects.unshift(new waveEffect(this.x + this.xsize / 2, this.y + this.ysize / 2, 40, "green", 3));
+            console.log(game.objects[0]);
             for (let i = 0; i < toDelete.length; i++) {
                 let removed = 0;
                 if (toDelete[i - removed].type == "tile" || toDelete[i - removed].collectable == true) {
@@ -412,9 +426,8 @@ let cellTypes = {
                     }
                 }
             }
-            parent.energy -= 2.5;
+            parent.energy -= 2;
             this.ready = false;
-            console.log(toDelete);
         }
         this.spawnCell = false;
         this.energyCost = 7;
@@ -619,7 +632,6 @@ class player {
             }
             if (this.cells.length == 0) {
                 gameOver();
-                console.log("a")
             }
             if (game.actualScene == "gameOver") return;
             let removede = 0;
@@ -661,8 +673,6 @@ class player {
                 for (let i = 0; i < cellGroups.length; i++) {
                     a(cellGroups[i], cellGroups[i][0]);
                 }
-                console.log(sensored);
-                console.log(cellGroups);
                 for (let i = 0; i < cellGroups.length; i++) {
                     longMap.push(cellGroups[i].length)
                 }
@@ -674,8 +684,6 @@ class player {
                         removeded++;
                     }
                 }
-                console.log(cellGroups);
-                console.log(longMap);
                 this.cells = cellGroups[0];
                 this.groupDebug = cellGroups;
             }
@@ -700,7 +708,6 @@ class player {
             }
             if (this.cells.length == 0) {
                 gameOver();
-                console.log("a");
             }
             if (game.actualScene == "gameOver") return;
             
@@ -708,7 +715,6 @@ class player {
             for (let i = 0; i < this.buildPlaces.length; i++) {
                 if (game.clicking) {
                     if (game.isOverlap(this.buildPlaces[i], { x: game.cursorX + camera.x, y: game.cursorY + camera.y, xsize: 2, ysize: 2 }) && this.buildPlaces[i].active) {
-                        console.log(this.buildType);
                         if (new cellTypes[this.buildType](this.buildPlaces[i].x, this.buildPlaces[i].y).energyCost <= this.energy && game.showBuildArea) {
                             this.energy -= new cellTypes[this.buildType](this.buildPlaces[i].x, this.buildPlaces[i].y).energyCost;
                             this.cells.unshift(new cellTypes[this.buildType](this.buildPlaces[i].x, this.buildPlaces[i].y));
