@@ -16,8 +16,10 @@ class waveEffect {
         this.update = () => {
             ctx.strokeStyle = this.color;
             ctx.lineWidth = 20;
+            let camera = game.objects[game.findObjectWithProp(game.objects, "type", "camera")];
+            console.log(camera);
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true);
+            ctx.arc(this.x - camera.x, this.y - camera.y, this.radius, 0, 2 * Math.PI, true);
             ctx.stroke();
             ctx.closePath();
             this.lifetime--;

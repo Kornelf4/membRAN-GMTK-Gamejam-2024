@@ -92,7 +92,7 @@ function start() {
         game.objects.unshift(new worldBorder(maps[game.actualScene][0].length * game.girdSize,-1, 1, maps[game.actualScene].length * game.girdSize));
         game.objects.push(new button(20, 20, 120, 30, "lightgreen", "BUILD CELL", function () { game.showBuildArea = !game.showBuildArea }));
         game.objects.push(new button(20, 70, 150, 30, "red", "DELETE CELL", function () { game.deleteMode = !game.deleteMode }));
-        game.objects.push(new sideBar(200));
+        game.objects.push(new sideBar(350));
         game.objects[game.objects.length - 1].start();
         game.objects.unshift(new winPortal(16 * game.girdSize, 26 * game.girdSize));
         game.objects.push(new player(4 * game.girdSize, 4 * game.girdSize));

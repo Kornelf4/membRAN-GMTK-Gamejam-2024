@@ -197,7 +197,7 @@ function sideBar(xsize) {
     this.canCollide = false;
     this.type = "bar";
     this.content = [];
-    this.buttonSize = 40;
+    this.buttonSize = 75;
     this.space = 10;
     this.scene = game.actualScene;
     this.color = "#70d48b";
@@ -212,7 +212,8 @@ function sideBar(xsize) {
                 let player = game.objects[game.findObjectWithProp(game.objects, "type", "player")];
                 player.buildType = this.src;
             }, i, "Idle0.png"));
-            this.content.unshift(new textBox(this.x + 110, (this.buttonSize + this.space) * i2 + this.space, new cellTypes[i](0, 0).energyCost, this.buttonSize, "black"));
+            this.content.unshift(new textBox(this.x + 130, (this.buttonSize + this.space) * i2 + this.space, new cellTypes[i](0, 0).displayName, this.buttonSize / 2, "darkgreen"));
+            this.content.unshift(new textBox(this.x + 10, (this.buttonSize + this.space) * i2 + this.space - 10, new cellTypes[i](0, 0).energyCost, this.buttonSize - 10, "yellow"));
             i2++;
         }
     }
@@ -238,6 +239,7 @@ let cellTypes = {
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.type = "cell";
+        this.displayName = "Basic cell";
         this.spawnCell = false;
         this.name = "baseCell";
         this.scene = game.actualScene;
@@ -284,6 +286,7 @@ let cellTypes = {
         this.xsize = game.girdSize;
         this.hp = 4;
         this.ysize = game.girdSize;
+        this.displayName = "Armored cell";
         this.hasLayers = true;
         this.type = "cell";
         this.spawnCell = false;
@@ -333,6 +336,7 @@ let cellTypes = {
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.heat = 0;
+        this.displayName = "Photosynt cell";
         this.type = "cell";
         this.update = function (parent) {
             this.heat++;
@@ -389,6 +393,7 @@ let cellTypes = {
         this.ysize = game.girdSize;
         this.hasLayers = true;
         this.readyToReady = false;
+        this.displayName = "Acid cell";
         this.ready = false;
         this.tick = 0;
         this.type = "cell";
